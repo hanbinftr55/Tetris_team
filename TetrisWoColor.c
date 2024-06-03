@@ -153,11 +153,9 @@ int main() {
     }
     while (1) {
         if (gameMode == 1) {
-            for (i = 0; i < 1; i++) { //블록이 한칸떨어지는동안 5번 키입력받을 수 있음 
+            for (i = 0; i < 3; i++) { //블록이 한칸떨어지는동안 5번 키입력받을 수 있음 
                 check_key(); //키입력확인 
-                // make_afterimage();
                 draw_main(); //화면을 그림 
-                // delete_afterimage();
                 Sleep(speed); //게임속도조절 
                 if (crush_on && check_crush(bx, by + 1, b_rotation) == false) Sleep(100);
                 //블록이 충돌중인경우 추가로 이동및 회전할 시간을 갖음 
@@ -341,6 +339,7 @@ void draw_main(void) { //게임판 그리는 함수
                 case INACTIVE_BLOCK: //굳은 블럭 모양  
                     printf("□");
                     break;
+                case ACTIVE_ON_INTERMEDIATE:
                 case ACTIVE_BLOCK: //움직이고있는 블럭 모양  
                     printf("■");
                     break;
@@ -353,7 +352,7 @@ void draw_main(void) { //게임판 그리는 함수
                     //printf("▒");
                     //printf("  ")
                     
-;
+
                     break;
                 }
             }
@@ -532,7 +531,7 @@ void move_block(int dir) { //블록을 이동시킴
                 if (gameMode == 1) {
 
                     if (blocks[b_type][b_rotation][i][j] == 1) {
-                        if (main_org[by + i][bx + j] == INTERMEDIATE_BLOCK) {
+                        if (main_org[by + i][bx + j] == INTERMEDIATE_BLOCK || main_org[by + i][bx + j] == ACTIVE_ON_INTERMEDIATE) {
                             main_org[by + i][bx + j] = INTERMEDIATE_BLOCK;
                         }
                         else {
@@ -547,7 +546,20 @@ void move_block(int dir) { //블록을 이동시킴
         }
         for (i = 0; i < 4; i++) { //왼쪽으로 한칸가서 active block을 찍음 
             for (j = 0; j < 4; j++) {
-                if (blocks[b_type][b_rotation][i][j] == 1) main_org[by + i][bx + j - 1] = ACTIVE_BLOCK;
+                if (gameMode == 1) {
+                    if (blocks[b_type][b_rotation][i][j] == 1) {
+                        if (main_org[by + i][bx + j - 1] == INTERMEDIATE_BLOCK) {
+                            main_org[by + i][bx + j - 1] = ACTIVE_ON_INTERMEDIATE;
+                        }
+                        else {
+                            main_org[by + i][bx + j - 1] = ACTIVE_BLOCK;
+                        }
+
+                    }
+                }
+                else {
+                    if (blocks[b_type][b_rotation][i][j] == 1) main_org[by + i][bx + j - 1] = ACTIVE_BLOCK;
+                }
             }
         }
         bx--; //좌표값 이동 
@@ -557,7 +569,7 @@ void move_block(int dir) { //블록을 이동시킴
         for (i = 0; i < 4; i++) {
             for (j = 0; j < 4; j++) {
                 if (blocks[b_type][b_rotation][i][j] == 1) {
-                    if (main_org[by + i][bx + j] == INTERMEDIATE_BLOCK) {
+                    if (main_org[by + i][bx + j] == INTERMEDIATE_BLOCK || main_org[by + i][bx + j] == ACTIVE_ON_INTERMEDIATE) {
                         main_org[by + i][bx + j] = INTERMEDIATE_BLOCK;
                     }
                     else {
@@ -569,7 +581,21 @@ void move_block(int dir) { //블록을 이동시킴
         }
         for (i = 0; i < 4; i++) {
             for (j = 0; j < 4; j++) {
-                if (blocks[b_type][b_rotation][i][j] == 1) main_org[by + i][bx + j + 1] = ACTIVE_BLOCK;
+                if (gameMode == 1) {
+                    if (blocks[b_type][b_rotation][i][j] == 1) {
+                        if (main_org[by + i][bx + j + 1] == INTERMEDIATE_BLOCK) {
+                            main_org[by + i][bx + j + 1] = ACTIVE_ON_INTERMEDIATE;
+                        }
+                        else {
+                            main_org[by + i][bx + j + 1] = ACTIVE_BLOCK;
+                        }
+
+                    }
+
+                }
+                else {
+                    if (blocks[b_type][b_rotation][i][j] == 1) main_org[by + i][bx + j + 1] = ACTIVE_BLOCK;
+                }
             }
         }
         bx++;
@@ -578,6 +604,7 @@ void move_block(int dir) { //블록을 이동시킴
     case DOWN:    //아래쪽 방향. 왼쪽방향이랑 같은 원리로 동작
         for (i = 0; i < 4; i++) {
             for (j = 0; j < 4; j++) {
+                
                 if (blocks[b_type][b_rotation][i][j] == 1) {
                     if (main_org[by + i][bx + j] == INTERMEDIATE_BLOCK || main_org[by + i][bx + j] == ACTIVE_ON_INTERMEDIATE) {
                         main_org[by + i][bx + j] = INTERMEDIATE_BLOCK;
@@ -617,7 +644,7 @@ void move_block(int dir) { //블록을 이동시킴
         for (i = 0; i < 4; i++) { //현재좌표의 블럭을 지움  
             for (j = 0; j < 4; j++) {
                 if (blocks[b_type][b_rotation][i][j] == 1) {
-                    if (main_org[by + i][bx + j] == INTERMEDIATE_BLOCK) {
+                    if (main_org[by + i][bx + j] == INTERMEDIATE_BLOCK || main_org[by + i][bx + j] == ACTIVE_ON_INTERMEDIATE) {
                         main_org[by + i][bx + j] = INTERMEDIATE_BLOCK;
                     }
                     else {
@@ -629,26 +656,74 @@ void move_block(int dir) { //블록을 이동시킴
         b_rotation = (b_rotation + 1) % 4; //회전값을 1증가시킴(3에서 4가 되는 경우는 0으로 되돌림) 
         for (i = 0; i < 4; i++) { //회전된 블록을 찍음 
             for (j = 0; j < 4; j++) {
-                if (blocks[b_type][b_rotation][i][j] == 1) main_org[by + i][bx + j] = ACTIVE_BLOCK;
+                if (gameMode == 1) {
+                    if (blocks[b_type][b_rotation][i][j] == 1) {
+                        if (main_org[by + i][bx + j] == INTERMEDIATE_BLOCK) {
+                            main_org[by + i][bx + j] = ACTIVE_ON_INTERMEDIATE;
+                        }
+                        else {
+                            main_org[by + i][bx + j] = ACTIVE_BLOCK;
+                        }
+
+                    }
+                }
+                else {
+                    if (blocks[b_type][b_rotation][i][j] == 1) main_org[by + i][bx + j] = ACTIVE_BLOCK;
+                }
+
             }
         }
         break;
 
     case 100: //블록이 바닥, 혹은 다른 블록과 닿은 상태에서 한칸위로 올려 회전이 가능한 경우 
         //이를 동작시키는 특수동작 
-        for (i = 0; i < 4; i++) {
-            for (j = 0; j < 4; j++) {
-                if (blocks[b_type][b_rotation][i][j] == 1) main_org[by + i][bx + j] = EMPTY;
+
+        if (gameMode == 1) {
+            for (i = 0; i < 4; i++) {
+                for (j = 0; j < 4; j++) {
+                    if (blocks[b_type][b_rotation][i][j] == 1) {
+                        if (main_org[by + i][bx + j] == INTERMEDIATE_BLOCK || main_org[by + i][bx + j] == ACTIVE_ON_INTERMEDIATE) {
+                            main_org[by + i][bx + j] = INTERMEDIATE_BLOCK;
+                        }
+                        else {
+                            main_org[by + i][bx + j] = EMPTY;
+                        }
+                    }
+                }
             }
-        }
-        b_rotation = (b_rotation + 1) % 4;
-        for (i = 0; i < 4; i++) {
-            for (j = 0; j < 4; j++) {
-                if (blocks[b_type][b_rotation][i][j] == 1) main_org[by + i - 1][bx + j] = ACTIVE_BLOCK;
+            b_rotation = (b_rotation + 1) % 4;
+            for (i = 0; i < 4; i++) {
+                for (j = 0; j < 4; j++) {
+                    if (blocks[b_type][b_rotation][i][j] == 1) {
+                        if (main_org[by + i - 1][bx + j] == INTERMEDIATE_BLOCK) {
+                            main_org[by + i - 1][bx + j] = ACTIVE_ON_INTERMEDIATE;
+                        }
+                        else {
+                            main_org[by + i - 1][bx + j] = ACTIVE_BLOCK;
+                        }
+                    }
+                }
             }
+            by--;
+            break;
         }
-        by--;
-        break;
+        
+        else {
+
+            for (i = 0; i < 4; i++) {
+                for (j = 0; j < 4; j++) {
+                    if (blocks[b_type][b_rotation][i][j] == 1) main_org[by + i][bx + j] = EMPTY;
+                }
+            }
+            b_rotation = (b_rotation + 1) % 4;
+            for (i = 0; i < 4; i++) {
+                for (j = 0; j < 4; j++) {
+                    if (blocks[b_type][b_rotation][i][j] == 1) main_org[by + i - 1][bx + j] = ACTIVE_BLOCK;
+                }
+            }
+            by--;
+            break;
+        }
     }
 }
 
